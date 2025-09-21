@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MUSAREUSFX License Generator</title>
+    <style>
+        body { font-family: Arial; margin: 40px; background: #f0f8ff; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto; }
+        input, button { padding: 12px; margin: 10px 0; width: 100%; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0056b3; }
+        .license { background: #e8f5e8; padding: 20px; margin: 20px 0; border-left: 5px solid #28a745; border-radius: 5px; }
+        .code { font-family: 'Courier New', monospace; font-size: 18px; font-weight: bold; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔐 MUSAREUSFX License Generator</h2>
+        
+        <input type="text" id="customerName" placeholder="Customer Name" required>
+        <input type="email" id="customerEmail" placeholder="Customer Email" required>
+        <button onclick="generateLicense()">🎫 Generate License</button>
+        
+        <div id="licenseResult" class="license" style="display: none;">
+            <h3>✅ License Generated Successfully!</h3>
+            <p><strong>Activation Code:</strong><br>
+            <span id="activationCode" class="code"></span></p>
+            
+            <p><strong>License Key:</strong><br>
+            <span id="licenseKey" class="code"></span></p>
+            
+            <button onclick="copyToClipboard()">📋 Copy to Clipboard</button>
+        </div>
+    </div>
+
+    <script>
+        function generateLicense() {
+            const name = document.getElementById('customerName').value;
+            const email = document.getElementById('customerEmail').value;
+            
+            if(!name || !email) {
+                alert('Please enter customer name and email');
+                return;
+            }
+
+            // Generate 16-digit activation code
+            let code = '';
+            for(let i = 0; i < 16; i++) {
+                code += Math.floor(Math.random() * 10);
+            }
+            
+            // Format as XXXX-XXXX-XXXX-XXXX
+            const formattedCode = code.substring(0,4) + '-' + code.substring(4,8) + '-' + code.substring(8,12) + '-' + code.substring(12,16);
+            
+            // Generate license key
+            const licenseKey = btoa(name + email + Date.now()).substring(0, 20).replace(/=/g, '');
+            
+            // Show results
+            document.getElementById('activationCode').textContent = formattedCode;
+            document.getElementById('licenseKey').textContent = licenseKey;
+            document.getElementById('licenseResult').style.display = 'block';
+        }
+
+        function copyToClipboard() {
+            const text = `MUSAREUSFX LICENSE
+Activation Code: ${document.getElementById('activationCode').textContent}
+License Key: ${document.getElementById('licenseKey').textContent}
+Generated: ${new Date().toLocaleDateString()}`;
+            
+            navigator.clipboard.writeText(text);
+            alert('✅ License copied to clipboard!');
+        }
+    </script>
+</body>
+</html>
