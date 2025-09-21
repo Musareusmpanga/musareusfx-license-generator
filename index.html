@@ -5,11 +5,12 @@
     <style>
         body { font-family: Arial; margin: 40px; background: #f0f8ff; }
         .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto; }
-        input, button { padding: 12px; margin: 10px 0; width: 100%; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; }
+        input, select, button { padding: 12px; margin: 10px 0; width: 100%; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; }
         button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
         button:hover { background: #0056b3; }
         .license { background: #e8f5e8; padding: 20px; margin: 20px 0; border-left: 5px solid #28a745; border-radius: 5px; }
         .code { font-family: 'Courier New', monospace; font-size: 18px; font-weight: bold; color: #333; }
+        .expiry-warning { color: #dc3545; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -18,17 +19,27 @@
         
         <input type="text" id="customerName" placeholder="Customer Name" required>
         <input type="email" id="customerEmail" placeholder="Customer Email" required>
+        
+        <select id="licenseDuration">
+            <option value="30">30 Days ($99)</option>
+            <option value="90">90 Days ($249)</option>
+            <option value="365" selected>1 Year ($799)</option>
+            <option value="730">2 Years ($1399)</option>
+            <option value="9999">Lifetime ($2999)</option>
+        </select>
+        
         <button onclick="generateLicense()">🎫 Generate License</button>
         
         <div id="licenseResult" class="license" style="display: none;">
             <h3>✅ License Generated Successfully!</h3>
-            <p><strong>Activation Code:</strong><br>
-            <span id="activationCode" class="code"></span></p>
-            
-            <p><strong>License Key:</strong><br>
-            <span id="licenseKey" class="code"></span></p>
+            <p><strong>Customer:</strong> <span id="customerInfo"></span></p>
+            <p><strong>Activation Code:</strong><br><span id="activationCode" class="code"></span></p>
+            <p><strong>License Key:</strong><br><span id="licenseKey" class="code"></span></p>
+            <p><strong>Valid Until:</strong> <span id="expiryDate" class="expiry-warning"></span></p>
+            <p><strong>Duration:</strong> <span id="licenseDurationDisplay"></span></p>
             
             <button onclick="copyToClipboard()">📋 Copy to Clipboard</button>
+            <button onclick="saveAsFile()">💾 Save as File</button>
         </div>
     </div>
 
@@ -36,6 +47,7 @@
         function generateLicense() {
             const name = document.getElementById('customerName').value;
             const email = document.getElementById('customerEmail').value;
+            const duration = parseInt(document.getElementById('licenseDuration').value);
             
             if(!name || !email) {
                 alert('Please enter customer name and email');
@@ -51,23 +63,75 @@
             // Format as XXXX-XXXX-XXXX-XXXX
             const formattedCode = code.substring(0,4) + '-' + code.substring(4,8) + '-' + code.substring(8,12) + '-' + code.substring(12,16);
             
-            // Generate license key
-            const licenseKey = btoa(name + email + Date.now()).substring(0, 20).replace(/=/g, '');
+            // Calculate expiry date
+            const expiryDate = new Date();
+            if(duration === 9999) {
+                expiryDate.setFullYear(expiryDate.getFullYear() + 100); // Lifetime
+            } else {
+                expiryDate.setDate(expiryDate.getDate() + duration);
+            }
             
-            // Show results
+            // Generate license key (includes expiry timestamp)
+            const expiryTimestamp = Math.floor(expiryDate.getTime() / 1000);
+            const licenseData = `${name}:${email}:${expiryTimestamp}:${formattedCode}`;
+            const licenseKey = btoa(licenseData).substring(0, 30).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+            
+            // Display results
+            document.getElementById('customerInfo').textContent = `${name} (${email})`;
             document.getElementById('activationCode').textContent = formattedCode;
             document.getElementById('licenseKey').textContent = licenseKey;
+            document.getElementById('expiryDate').textContent = expiryDate.toDateString();
+            
+            // Show duration
+            let durationText = '';
+            if(duration === 9999) {
+                durationText = 'Lifetime';
+            } else if(duration === 365) {
+                durationText = '1 Year';
+            } else if(duration === 730) {
+                durationText = '2 Years';
+            } else {
+                durationText = `${duration} Days`;
+            }
+            document.getElementById('licenseDurationDisplay').textContent = durationText;
+            
             document.getElementById('licenseResult').style.display = 'block';
         }
 
         function copyToClipboard() {
             const text = `MUSAREUSFX LICENSE
+Customer: ${document.getElementById('customerInfo').textContent}
 Activation Code: ${document.getElementById('activationCode').textContent}
 License Key: ${document.getElementById('licenseKey').textContent}
+Valid Until: ${document.getElementById('expiryDate').textContent}
+Duration: ${document.getElementById('licenseDurationDisplay').textContent}
 Generated: ${new Date().toLocaleDateString()}`;
             
             navigator.clipboard.writeText(text);
             alert('✅ License copied to clipboard!');
+        }
+
+        function saveAsFile() {
+            const content = `MUSAREUSFX LICENSE FILE
+===============================
+Customer: ${document.getElementById('customerInfo').textContent}
+Activation Code: ${document.getElementById('activationCode').textContent}
+License Key: ${document.getElementById('licenseKey').textContent}
+Valid Until: ${document.getElementById('expiryDate').textContent}
+License Duration: ${document.getElementById('licenseDurationDisplay').textContent}
+Generated: ${new Date().toLocaleString()}
+===============================
+© 2024 MUSAREUSFX - All rights reserved.`;
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'musareusfx_license.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
     </script>
 </body>
